@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Log in — Field Reading</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #17130F;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: #8FB542;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.2;
+    color: #F1EDE1;
+    margin-bottom: 14px;
+  }
+  h1 span { color: #8FB542; }
+
+  .lede {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #9C9A90;
+    margin-bottom: 32px;
+  }
+
+  .frame {
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 28px 24px;
+    background: rgba(255,255,255,0.015);
+  }
+
+  /* camera-viewfinder corner brackets, echoing the reference screenshot */
+  .frame::before, .frame::after,
+  .frame .br-tl, .frame .br-br {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: rgba(241,237,225,0.35);
+  }
+  .frame::before {
+    top: -1px; left: -1px;
+    border-top: 1.5px solid rgba(241,237,225,0.35);
+    border-left: 1.5px solid rgba(241,237,225,0.35);
+  }
+  .frame::after {
+    top: -1px; right: -1px;
+    border-top: 1.5px solid rgba(241,237,225,0.35);
+    border-right: 1.5px solid rgba(241,237,225,0.35);
+  }
+  .frame .br-bl {
+    position: absolute; bottom: -1px; left: -1px;
+    width: 18px; height: 18px;
+    border-bottom: 1.5px solid rgba(241,237,225,0.35);
+    border-left: 1.5px solid rgba(241,237,225,0.35);
+  }
+  .frame .br-br {
+    bottom: -1px; right: -1px;
+    border-bottom: 1.5px solid rgba(241,237,225,0.35);
+    border-right: 1.5px solid rgba(241,237,225,0.35);
+  }
+
+  .field-label {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: #6B6A60;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .field { margin-bottom: 20px; }
+
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    background: #0F0C09;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 3px;
+    font-size: 15px;
+    color: #F1EDE1;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .field input::placeholder { color: #4A4944; }
+  .field input:focus {
+    border-color: #8FB542;
+    box-shadow: 0 0 0 3px rgba(143, 181, 66, 0.12);
+  }
+
+  .password-wrap {
+    position: relative;
+  }
+  .password-wrap input {
+    padding-right: 44px;
+  }
+  .toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6B6A60;
+    padding: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toggle-password:hover { color: #9C9A90; }
+  .toggle-password svg { display: block; }
+  .toggle-password .eye-off { display: none; }
+  .toggle-password.showing .eye { display: none; }
+  .toggle-password.showing .eye-off { display: block; }
+
+  .row-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 26px;
+    font-size: 13px;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #9C9A90;
+  }
+  .checkbox-row input { width: 14px; height: 14px; accent-color: #8FB542; }
+
+  .forgot-link {
+    color: #8FB542;
+    text-decoration: none;
+  }
+  .forgot-link:hover { text-decoration: underline; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 3px;
+    background: #8FB542;
+    color: #17130F;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .submit-btn:hover { background: #A0C956; }
+  .submit-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .error-msg {
+    font-size: 12.5px;
+    color: #E29A5A;
+    margin: -10px 0 16px;
+    line-height: 1.5;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    color: #4A4944;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .google-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: #F1EDE1;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .google-btn:hover { background: rgba(255,255,255,0.03); }
+
+  .signup-line {
+    text-align: center;
+    margin-top: 26px;
+    font-size: 13px;
+    color: #6B6A60;
+  }
+  .signup-line a {
+    color: #8FB542;
+    text-decoration: none;
+  }
+  .signup-line a:hover { text-decoration: underline; }
+
+  .verify-banner {
+    display: none;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px solid rgba(226,154,90,0.35);
+    background: rgba(226,154,90,0.08);
+    border-radius: 3px;
+  }
+  .verify-banner p {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #E29A5A;
+    margin-bottom: 10px;
+  }
+  .verify-banner-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .verify-banner-actions button {
+    flex: 1;
+    padding: 9px;
+    border-radius: 3px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  #resendLoginBtn {
+    background: transparent;
+    border: 1px solid #E29A5A;
+    color: #E29A5A;
+  }
+  #resendLoginBtn:hover { background: rgba(226,154,90,0.1); }
+  #resendLoginBtn:disabled { opacity: 0.5; cursor: default; }
+  #continueAnywayBtn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #9C9A90;
+  }
+  #continueAnywayBtn:hover { background: rgba(255,255,255,0.03); }
+</style>
+</head>
+<body>
+
+  <div class="page">
+    <p class="eyebrow mono">FIELD READING</p>
+    <h1>Get back to<br />your <span>fields.</span></h1>
+    <p class="lede mono">Log in to keep reading soil texture, condition, and crop fit — right where you left off.</p>
+
+    <div class="frame">
+      <div class="br-bl"></div>
+      <div class="br-br"></div>
+
+      <form id="loginForm">
+        <div class="field">
+          <p class="field-label mono">Username or Email</p>
+          <input type="text" id="identifier" placeholder="username or you@example.com" required autocomplete="username" />
+        </div>
+
+        <div class="field">
+          <p class="field-label mono">Password</p>
+          <div class="password-wrap">
+            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Show password">
+              <svg class="eye" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+              <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c7 0 10.5 7 10.5 7a13.2 13.2 0 0 1-3.1 3.9M6.6 6.6C3.4 8.8 1.5 12 1.5 12S5 19 12 19c1.4 0 2.6-.3 3.7-.7M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="row-between mono">
+          <label class="checkbox-row">
+            <input type="checkbox" />
+            Remember me
+          </label>
+          <a href="#" class="forgot-link" id="forgotLink">Forgot?</a>
+        </div>
+
+        <p class="error-msg mono" id="errorMsg" style="display:none;"></p>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Log in</button>
+      </form>
+
+      <div class="verify-banner mono" id="verifyBanner">
+        <p id="verifyBannerText">Your email isn't verified yet. Check your inbox for the link we sent when you signed up.</p>
+        <div class="verify-banner-actions">
+          <button type="button" id="resendLoginBtn">Resend email</button>
+          <button type="button" id="continueAnywayBtn">Continue anyway</button>
+        </div>
+      </div>
+
+      <div class="divider mono">OR</div>
+
+      <button type="button" class="google-btn" id="googleBtn">Continue with Google</button>
+    </div>
+
+    <p class="signup-line mono">No account? <a href="signup.html">Sign up</a></p>
+  </div>
+
+  <!-- Firebase (modular v10 SDK via CDN) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      GoogleAuthProvider,
+      signInWithPopup,
+      sendPasswordResetEmail,
+      sendEmailVerification,
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      collection,
+      query,
+      where,
+      getDocs,
+      limit,
+      serverTimestamp,
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // TODO: replace with your own Firebase project config
+    // (Firebase console -> Project settings -> General -> Your apps -> SDK setup and configuration)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAQrRsdvW5fwv_3f_cv9NW255TRzg8rmts",
+      authDomain: "tilth-ai.firebaseapp.com",
+      projectId: "tilth-ai",
+      storageBucket: "tilth-ai.firebasestorage.app",
+      messagingSenderId: "631969995563",
+      appId: "1:631969995563:web:9debf13b631071746f836e",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById("loginForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const errorMsg = document.getElementById("errorMsg");
+    const googleBtn = document.getElementById("googleBtn");
+    const forgotLink = document.getElementById("forgotLink");
+    const verifyBanner = document.getElementById("verifyBanner");
+    const resendLoginBtn = document.getElementById("resendLoginBtn");
+    const continueAnywayBtn = document.getElementById("continueAnywayBtn");
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+
+    let pendingUnverifiedUser = null;
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.style.display = "block";
+    }
+    function clearError() {
+      errorMsg.style.display = "none";
+      errorMsg.textContent = "";
+    }
+
+    // Where to send the user after a successful login.
+    // Change this to your app's main page.
+    const REDIRECT_URL = "index.html";
+
+    async function ensureUserDoc(user) {
+      const userRef = doc(db, "users", user.uid);
+      const existing = await getDoc(userRef);
+      if (!existing.exists()) {
+        const username = await usernameFromGoogleProfile(user);
+        await setDoc(userRef, {
+          email: user.email,
+          username: username,
+          username_lower: username ? username.toLowerCase() : null,
+          createdAt: serverTimestamp(),
+        });
+      }
+    }
+
+    // Turns a Google display name (e.g. "Jane Doe") into a valid,
+    // available username (e.g. "jane_doe"), falling back to the email
+    // prefix if there's no display name, and appending numbers if the
+    // first choice is already taken.
+    async function usernameFromGoogleProfile(user) {
+      const source = user.displayName || (user.email ? user.email.split("@")[0] : "") || "user";
+      let base = source
+        .trim()
+        .replace(/[^a-zA-Z0-9_]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .slice(0, 20);
+      if (base.length < 3) base = (base + "_user").slice(0, 20);
+
+      let candidate = base;
+      let usersRef = collection(db, "users");
+      for (let i = 0; i < 6; i++) {
+        const q = query(usersRef, where("username_lower", "==", candidate.toLowerCase()), limit(1));
+        const snap = await getDocs(q);
+        if (snap.empty) return candidate;
+        const suffix = String(Math.floor(Math.random() * 9000) + 100);
+        candidate = (base.slice(0, 20 - suffix.length) + suffix);
+      }
+      return candidate;
+    }
+
+    // Given whatever the user typed, resolve it to an email address.
+    // If it already looks like an email, use it as-is. Otherwise, treat
+    // it as a username and look up the matching email in Firestore.
+    async function resolveEmail(identifier) {
+      if (identifier.includes("@")) {
+        return identifier;
+      }
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username_lower", "==", identifier.toLowerCase()), limit(1));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        return null;
+      }
+      return snap.docs[0].data().email || null;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearError();
+      verifyBanner.style.display = "none";
+      pendingUnverifiedUser = null;
+
+      const identifier = document.getElementById("identifier").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!identifier || !password) {
+        showError("Enter your username/email and password.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Logging in...";
+
+      try {
+        const email = await resolveEmail(identifier);
+        if (!email) {
+          showError("Account not created.");
+          return;
+        }
+
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await ensureUserDoc(cred.user);
+
+        const isPasswordAccount = cred.user.providerData.some((p) => p.providerId === "password");
+        if (isPasswordAccount && !cred.user.emailVerified) {
+          pendingUnverifiedUser = cred.user;
+          verifyBanner.style.display = "block";
+          return;
+        }
+
+        window.location.href = REDIRECT_URL;
+      } catch (err) {
+        console.error(err);
+        showError(friendlyError(err.code));
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Log in";
+      }
+    });
+
+    googleBtn.addEventListener("click", async () => {
+      clearError();
+      verifyBanner.style.display = "none";
+      pendingUnverifiedUser = null;
+      const provider = new GoogleAuthProvider();
+      try {
+        const cred = await signInWithPopup(auth, provider);
+        await ensureUserDoc(cred.user);
+        window.location.href = REDIRECT_URL;
+      } catch (err) {
+        console.error("Google sign-in error:", err.code, err.message);
+        showError(friendlyError(err.code) + " (" + err.code + ")");
+      }
+    });
+
+    resendLoginBtn.addEventListener("click", async () => {
+      if (!pendingUnverifiedUser) return;
+      resendLoginBtn.disabled = true;
+
+      try {
+        await sendEmailVerification(pendingUnverifiedUser);
+        document.getElementById("verifyBannerText").textContent =
+          "Verification email sent — check your inbox.";
+
+        let secondsLeft = 60;
+        resendLoginBtn.textContent = `Resend in ${secondsLeft}s`;
+        const interval = setInterval(() => {
+          secondsLeft -= 1;
+          if (secondsLeft <= 0) {
+            clearInterval(interval);
+            resendLoginBtn.textContent = "Resend email";
+            resendLoginBtn.disabled = false;
+          } else {
+            resendLoginBtn.textContent = `Resend in ${secondsLeft}s`;
+          }
+        }, 1000);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("verifyBannerText").textContent =
+          err.code === "auth/too-many-requests"
+            ? "Too many requests — try again in a bit."
+            : "Couldn't send the email. Please try again.";
+        resendLoginBtn.disabled = false;
+      }
+    });
+
+    continueAnywayBtn.addEventListener("click", () => {
+      window.location.href = REDIRECT_URL;
+    });
+
+    togglePassword.addEventListener("click", () => {
+      const isShowing = passwordInput.type === "text";
+      passwordInput.type = isShowing ? "password" : "text";
+      togglePassword.classList.toggle("showing", !isShowing);
+      togglePassword.setAttribute("aria-label", isShowing ? "Show password" : "Hide password");
+    });
+
+    forgotLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      clearError();
+      const identifier = document.getElementById("identifier").value.trim();
+      if (!identifier) {
+        showError("Enter your username or email above first, then click Forgot.");
+        return;
+      }
+      try {
+        const email = await resolveEmail(identifier);
+        if (!email) {
+          showError("Account not created.");
+          return;
+        }
+        await sendPasswordResetEmail(auth, email);
+        showError("Password reset email sent — check your inbox.");
+      } catch (err) {
+        console.error(err);
+        showError(friendlyError(err.code));
+      }
+    });
+
+    function friendlyError(code) {
+      switch (code) {
+        case "auth/invalid-email":
+          return "That email address doesn't look right.";
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+          return "Incorrect username/email or password.";
+        case "auth/too-many-requests":
+          return "Too many attempts. Try again in a bit.";
+        case "auth/popup-closed-by-user":
+          return "Google sign-in was closed before finishing.";
+        case "auth/unauthorized-domain":
+          return "This domain isn't authorized in Firebase yet — add it under Authentication > Settings > Authorized domains.";
+        case "auth/operation-not-allowed":
+          return "Google sign-in isn't enabled yet — turn it on under Authentication > Sign-in method.";
+        case "auth/popup-blocked":
+          return "Your browser blocked the popup — allow popups for this site and try again.";
+        case "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
+        case "auth/invalid-api-key":
+          return "The Firebase API key in this file isn't valid — double check it against your Firebase console.";
+        default:
+          return "Something went wrong. Please try again.";
+      }
+    }
+  </script>
+
+</body>
+</html>
